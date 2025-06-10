@@ -1,0 +1,33 @@
+# Dependencies
+/node_modules
+
+# Build artifacts
+/dist
+
+# Environment variables
+.env
+*.env.local
+*.env.*.local
+!config.example.env
+
+# Service Account credentials
+/sa/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# User-specific directories
+/news/
+/outcomes/
+
+# Editor-specific files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp 

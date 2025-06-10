@@ -1,0 +1,30 @@
+{
+    "name": "bigquery-mcp-server",
+    "version": "1.0.0",
+    "description": "MCP server for BigQuery schema inspection and query execution",
+    "main": "dist/index.js",
+    "type": "module",
+    "scripts": {
+        "build": "tsc",
+        "start": "node dist/index.js",
+        "dev": "tsx src/index.ts"
+    },
+    "keywords": [
+        "mcp",
+        "bigquery",
+        "google-cloud",
+        "sql"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "@google-cloud/bigquery": "^7.3.0",
+        "@modelcontextprotocol/sdk": "^0.4.0",
+        "zod": "^3.22.4"
+    },
+    "devDependencies": {
+        "@types/node": "^20.10.0",
+        "tsx": "^4.6.0",
+        "typescript": "^5.3.0"
+    }
+}
