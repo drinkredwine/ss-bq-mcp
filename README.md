@@ -2,13 +2,21 @@
 
 A Model Context Protocol (MCP) server that provides tools for interacting with Google BigQuery. This server allows you to list datasets, inspect table schemas, and execute SQL queries through MCP tools.
 
+## Features
+
+- **List Datasets**: Get all datasets in your BigQuery project
+- **List Tables**: Get all tables in a specific dataset
+- **Get Table Schema**: Retrieve detailed schema information for any table
+- **Execute Queries**: Run SQL queries with optional dry-run validation
+- **Query Results**: Retrieve results from previously executed query jobs
+
 ## Getting Started
 
 Follow these steps to get the server up and running.
 
 ### Prerequisites
 
-*   [Node.js](httpss://nodejs.org/en/) (v18 or later recommended)
+*   [Node.js](https://nodejs.org/en/) (v18 or later recommended)
 *   A Google Cloud project with the BigQuery API enabled.
 *   A Google Cloud Service Account with BigQuery permissions (e.g., `BigQuery User`, `BigQuery Data Viewer`). You will need the JSON key file for this service account.
 
@@ -30,377 +38,93 @@ Follow these steps to get the server up and running.
     npm run build
     ```
 
-### Configuration
+## Configuration
 
-The server needs to be configured with your Google Cloud credentials. The recommended method is to use a service account key file.
+The server is configured using environment variables. This is how you provide your Google Cloud credentials and other settings.
 
-1.  **Copy the example configuration file:**
-    Create a `.env` file for your environment variables. You can start by copying the example file.
+### Required Environment Variables
+*   `GOOGLE_APPLICATION_CREDENTIALS`: The absolute path to your service account JSON key file. The Google Cloud Project ID will be automatically inferred from this file.
+
+### Optional Environment Variables
+*   `BQ_LOCATION`: The BigQuery location/region (e.g., 'US', 'EU'). Defaults to 'US'.
+*   `GOOGLE_CLOUD_PROJECT` or `BQ_PROJECT_ID`: Only required if you are *not* using a service account file (e.g., when using Application Default Credentials on Google Cloud).
+
+### How to Set Environment Variables
+
+You can provide these variables in several ways, depending on your use case.
+
+#### 1. MCP Client Configuration (Recommended)
+If you are running this server as a tool for an MCP client like Cursor, you should specify the environment variables directly in the client's configuration. This keeps the configuration for each tool self-contained.
+
+*Example for Cursor's `~/.cursor/mcp.json`:*
+```json
+{
+    "tools": {
+        "bigquery-superscale": {
+            "command": "node",
+            "args": [
+                "/path/to/your/ss-bq-mcp/dist/index.js"
+            ],
+            "env": {
+                "GOOGLE_APPLICATION_CREDENTIALS": "/path/to/your/service-account.json",
+                "BQ_LOCATION": "US"
+            }
+        }
+    }
+}
+```
+**Note:** Make sure to use the absolute path to `dist/index.js` and your credentials file.
+
+#### 2. Using a `.env` file (for Standalone Use)
+For local development or running the server standalone, you can place a `.env` file in the project root. The server will automatically load variables from it.
+
+1.  Copy the example file:
     ```bash
     cp config.example.env .env
     ```
-
-2.  **Set Environment Variables:**
-    The server can be configured via a `.env` file or environment variables. The easiest way to get started is to set `GOOGLE_APPLICATION_CREDENTIALS` to the path of your service account JSON key file. The project ID will be automatically detected from the key file.
-
-    Your `.env` file should look like this:
+2.  Edit your `.env` file:
     ```
-    # Path to your service account JSON key file.
-    # The Project ID will be inferred from this file.
     GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account-key.json
-
-    # Optional: BigQuery location/region (defaults to 'US')
-    # BQ_LOCATION='US'
+    BQ_LOCATION=US
     ```
 
-    Alternatively, you can export this variable in your shell.
-
-### Running the Server
-
-Once configured, you can start the server.
-
+#### 3. Shell Environment Variables
+You can also export the variables in your shell before running the server. This is common for production environments that don't use `.env` files.
 ```bash
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/your/service-account.json"
 npm start
 ```
 
+### Authentication for Local Development
+If you don't want to use a service account for local development, you can use your own user credentials.
+1. Install the `gcloud` CLI.
+2. Authenticate your user account:
+   ```bash
+   gcloud auth application-default login
+   ```
+3. Set the project ID environment variable, since it cannot be inferred without a service account file.
+   ```bash
+   export GOOGLE_CLOUD_PROJECT="your-project-id"
+   ```
+
+## Running the Server
+
+Once configured, you can start the server:
+```bash
+npm start
+```
 This will run the compiled server from the `dist/` directory.
 
-For development, you can run the server in watch mode:
-
+For development, you can run the server in watch mode with hot-reloading:
 ```bash
 npm run dev
 ```
 
 ## Usage
-
-### MCP Tools
-
-The server provides the following tools that can be called from an MCP client:
-
-#### `list_datasets`
-Lists all datasets in the BigQuery project.
-
-**Parameters:** None
-
-#### `list_tables`
-Lists all tables in a specific dataset.
-
-**Parameters:**
-- `datasetId` (string, required): The dataset ID to list tables from.
-
-#### `get_table_schema`
-Gets the schema of a specific table.
-
-**Parameters:**
-- `datasetId` (string, required): The dataset ID containing the table.
-- `tableId` (string, required): The table ID to get schema for.
-
-#### `execute_query`
-Executes a BigQuery SQL query.
-
-**Parameters:**
-- `query` (string, required): The SQL query to execute.
-- `maxResults` (number, optional): Maximum number of results to return (default: 100).
-- `dryRun` (boolean, optional): If true, only validate the query without executing it (default: false).
-
-#### `get_query_results`
-Gets results from a previously executed query job.
-
-**Parameters:**
-- `jobId` (string, required): The job ID of the query to get results for.
-- `maxResults` (number, optional): Maximum number of results to return (default: 100).
-
----
-
-For more detailed examples on how to use these tools with an MCP client, please refer to `USAGE_EXAMPLES.md`.
-
-## Authentication Methods
-
-The server supports multiple authentication methods with Google Cloud.
-
-### 1. Service Account Key File (Recommended)
-Set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to the absolute path of your service account JSON key file. The project ID will be automatically inferred. This is the most reliable method for running the server in any environment.
-
-### 2. Default Application Credentials
-If you are running the server on a Google Cloud service (like Compute Engine, Cloud Run, GKE), it can automatically use the credentials of the service's attached service account. In this case, you may need to explicitly set your project ID.
-
-Set `GOOGLE_CLOUD_PROJECT` or `BQ_PROJECT_ID` environment variable:
-```bash
-export GOOGLE_CLOUD_PROJECT="your-project-id"
-```
-
-### 3. User Credentials (Local Development)
-For local development, you can authenticate using your own Google Cloud account. First, install the `gcloud` CLI and then run:
-```bash
-gcloud auth application-default login
-```
-You will also need to set your project ID.
-```bash
-export GOOGLE_CLOUD_PROJECT="your-project-id"
-```
+For details on the available tools and how to call them from an MCP client, please see `USAGE_EXAMPLES.md`.
 
 ## Contributing
 Contributions are welcome! Please open an issue or submit a pull request.
 
-## Features
-
-- **List Datasets**: Get all datasets in your BigQuery project
-- **List Tables**: Get all tables in a specific dataset
-- **Get Table Schema**: Retrieve detailed schema information for any table
-- **Execute Queries**: Run SQL queries with optional dry-run validation
-- **Query Results**: Retrieve results from previously executed query jobs
-
-## Configuration
-
-The server can be configured in two ways:
-
-### Recommended: Service Account File (Simplest)
-Just set the path to your service account JSON file. The project ID will be automatically read from the file:
-- `GOOGLE_APPLICATION_CREDENTIALS`: Path to your service account key file
-
-### Alternative: Manual Configuration
-- `GOOGLE_CLOUD_PROJECT` or `BQ_PROJECT_ID`: Your Google Cloud project ID
-- `GOOGLE_APPLICATION_CREDENTIALS`: Path to your service account key file (optional)
-
-### Optional
-- `BQ_LOCATION`: BigQuery location/region (default: 'US')
-
-## Authentication
-
-You can authenticate with BigQuery using one of the following methods:
-
-### 1. Service Account Key File (Recommended)
-Simply set the path to your service account JSON file. The project ID will be automatically extracted:
-```bash
-export GOOGLE_APPLICATION_CREDENTIALS="/path/to/your/service-account-key.json"
-```
-
-**That's it!** No need to set project ID separately when using a service account file.
-
-### 2. Default Application Credentials
-If running on Google Cloud (Compute Engine, Cloud Run, etc.), the server will automatically use the default service account. You'll need to set the project ID manually:
-```bash
-export GOOGLE_CLOUD_PROJECT="your-project-id"
-```
-
-### 3. User Credentials (for development)
-You can use `gcloud auth application-default login` to set up user credentials for development. You'll need to set the project ID manually:
-```bash
-export GOOGLE_CLOUD_PROJECT="your-project-id"
-```
-
-## Usage
-
-### Running the Server
-
-```bash
-# Method 1: Pass service account file as argument (recommended)
-node dist/index.js /path/to/your/service-account.json
-
-# Method 2: Using the startup script
-./scripts/start-server.sh /path/to/your/service-account.json
-
-# Method 3: Using environment variables
-export GOOGLE_APPLICATION_CREDENTIALS="/path/to/your/service-account.json"
-npm start
-
-# Development mode with tsx
-npm run dev
-```
-
-### MCP Tools
-
-The server provides the following tools:
-
-#### `list_datasets`
-Lists all datasets in the BigQuery project.
-
-**Parameters:** None
-
-**Example Response:**
-```json
-{
-  "content": [
-    {
-      "type": "text",
-      "text": "Found 2 datasets:\n\n[\n  {\n    \"id\": \"my_dataset\",\n    \"friendlyName\": \"My Dataset\",\n    \"description\": \"Sample dataset\",\n    \"location\": \"US\",\n    \"creationTime\": \"2024-01-01T00:00:00.000Z\"\n  }\n]"
-    }
-  ]
-}
-```
-
-#### `list_tables`
-Lists all tables in a specific dataset.
-
-**Parameters:**
-- `datasetId` (string, required): The dataset ID to list tables from
-
-**Example:**
-```json
-{
-  "name": "list_tables",
-  "arguments": {
-    "datasetId": "my_dataset"
-  }
-}
-```
-
-#### `get_table_schema`
-Gets the schema of a specific table.
-
-**Parameters:**
-- `datasetId` (string, required): The dataset ID containing the table
-- `tableId` (string, required): The table ID to get schema for
-
-**Example:**
-```json
-{
-  "name": "get_table_schema",
-  "arguments": {
-    "datasetId": "my_dataset",
-    "tableId": "my_table"
-  }
-}
-```
-
-#### `execute_query`
-Executes a BigQuery SQL query.
-
-**Parameters:**
-- `query` (string, required): The SQL query to execute
-- `maxResults` (number, optional): Maximum number of results to return (default: 100)
-- `dryRun` (boolean, optional): If true, only validate the query without executing it (default: false)
-
-**Example:**
-```json
-{
-  "name": "execute_query",
-  "arguments": {
-    "query": "SELECT * FROM `my_project.my_dataset.my_table` LIMIT 10",
-    "maxResults": 10,
-    "dryRun": false
-  }
-}
-```
-
-#### `get_query_results`
-Gets results from a previously executed query job.
-
-**Parameters:**
-- `jobId` (string, required): The job ID of the query to get results for
-- `maxResults` (number, optional): Maximum number of results to return (default: 100)
-
-**Example:**
-```json
-{
-  "name": "get_query_results",
-  "arguments": {
-    "jobId": "job_12345",
-    "maxResults": 100
-  }
-}
-```
-
-## Easy Client Switching
-
-To switch between different clients, you have multiple options:
-
-### Method 1: Command Line Argument (Easiest)
-```bash
-# Client A
-node dist/index.js /path/to/client-a-service-account.json
-
-# Client B  
-node dist/index.js /path/to/client-b-service-account.json
-```
-
-### Method 2: Startup Script
-```bash
-# Client A
-./scripts/start-server.sh /path/to/client-a-service-account.json
-
-# Client B
-./scripts/start-server.sh /path/to/client-b-service-account.json
-```
-
-### Method 3: Environment Variable
-```bash
-export GOOGLE_APPLICATION_CREDENTIALS="/path/to/client-service-account.json"
-npm start
-```
-
-No need to remember or configure project IDs separately!
-
-## Example Usage in MCP Client
-
-```javascript
-// List all datasets
-const datasets = await mcpClient.callTool("list_datasets", {});
-
-// List tables in a dataset
-const tables = await mcpClient.callTool("list_tables", {
-  datasetId: "my_dataset"
-});
-
-// Get table schema
-const schema = await mcpClient.callTool("get_table_schema", {
-  datasetId: "my_dataset",
-  tableId: "my_table"
-});
-
-// Execute a query
-const results = await mcpClient.callTool("execute_query", {
-  query: "SELECT COUNT(*) as total FROM `my_project.my_dataset.my_table`",
-  maxResults: 1
-});
-
-// Dry run query validation
-const validation = await mcpClient.callTool("execute_query", {
-  query: "SELECT * FROM `my_project.my_dataset.my_table`",
-  dryRun: true
-});
-```
-
-## Error Handling
-
-The server includes comprehensive error handling:
-
-- **Authentication errors**: Invalid credentials or missing permissions
-- **Invalid queries**: SQL syntax errors or invalid table references
-- **Rate limiting**: BigQuery API rate limits
-- **Network errors**: Connection issues with BigQuery
-
-All errors are returned in the MCP response format with descriptive error messages.
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Run in development mode with hot reload
-npm run dev
-
-# Build for production
-npm run build
-
-# Run built version
-npm start
-```
-
-## Security Considerations
-
-- **Credentials**: Never commit service account keys to version control
-- **Query limits**: The server includes configurable result limits to prevent large data transfers
-- **Permissions**: Ensure your BigQuery service account has minimal required permissions
-- **Validation**: All inputs are validated using Zod schemas
-
-## Requirements
-
-- Node.js 18+
-- Google Cloud BigQuery API access
-- Valid Google Cloud authentication
-
 ## License
-
 MIT 
