@@ -12,16 +12,16 @@
 
 # Service Account credentials
 /sa/
+*.json
+!package*.json
+!tsconfig.json
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-
-# User-specific directories
-/news/
-/outcomes/
+*.log
 
 # Editor-specific files
 .vscode/
@@ -30,4 +30,9 @@ pnpm-debug.log*
 *.ntvs*
 *.njsproj
 *.sln
-*.swp 
+*.swp
+*.tmp
+
+# OS-specific files
+.DS_Store
+Thumbs.db 

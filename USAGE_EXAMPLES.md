@@ -2,90 +2,42 @@
 
 ## 🚀 **Starting the Server**
 
-### Method 1: Command Line Argument (Recommended for Multi-Client)
+### Environment Variable Method (Recommended)
 
-The easiest way to switch between different clients:
+The standard way to configure the server:
 
 ```bash
 # Build the server first
 npm run build
 
-# Start with Client A's service account
-node dist/index.js /path/to/client-a-service-account.json
-
-# Start with Client B's service account  
-node dist/index.js /path/to/client-b-service-account.json
-
-# Start with Client C's service account
-node dist/index.js ~/clients/client-c/bigquery-key.json
-```
-
-### Method 2: Startup Script
-
-Using the convenience script:
-
-```bash
-# Make sure it's executable
-chmod +x scripts/start-server.sh
-
-# Start with different clients
-./scripts/start-server.sh /path/to/client-a-service-account.json
-./scripts/start-server.sh /path/to/client-b-service-account.json
-```
-
-### Method 3: Environment Variable
-
-Traditional approach:
-
-```bash
-# Set environment variable
+# Set environment variable and start
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
+npm start
+```
 
-# Start server
+### Using a .env file
+
+For local development:
+
+```bash
+# Copy the example file
+cp config.example.env .env
+
+# Edit your .env file with your credentials
+# Then start the server
 npm start
 ```
 
 ## 🔧 **Cursor Configuration**
-
-### For Command Line Argument Approach
 
 Update your `~/.cursor/mcp.json`:
 
 ```json
 {
   "mcpServers": {
-    "bigquery-client-a": {
-      "command": "node",
-      "args": [
-        "/Users/dodo/code2/bq/dist/index.js",
-        "/path/to/client-a-service-account.json"
-      ],
-      "env": {
-        "BQ_LOCATION": "US"
-      }
-    },
-    "bigquery-client-b": {
-      "command": "node", 
-      "args": [
-        "/Users/dodo/code2/bq/dist/index.js",
-        "/path/to/client-b-service-account.json"
-      ],
-      "env": {
-        "BQ_LOCATION": "EU"
-      }
-    }
-  }
-}
-```
-
-### For Environment Variable Approach
-
-```json
-{
-  "mcpServers": {
     "bigquery": {
       "command": "node",
-      "args": ["/Users/dodo/code2/bq/dist/index.js"],
+      "args": ["/path/to/bigquery-mcp-server/dist/index.js"],
       "env": {
         "GOOGLE_APPLICATION_CREDENTIALS": "/path/to/service-account.json",
         "BQ_LOCATION": "US"
@@ -95,106 +47,99 @@ Update your `~/.cursor/mcp.json`:
 }
 ```
 
-## 📂 **Organizing Multiple Clients**
+### Multiple Projects
 
-Recommended folder structure:
+For working with multiple BigQuery projects, create separate server instances:
 
+```json
+{
+  "mcpServers": {
+    "bigquery-project-a": {
+      "command": "node",
+      "args": ["/path/to/bigquery-mcp-server/dist/index.js"],
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "/path/to/project-a-service-account.json",
+        "BQ_LOCATION": "US"
+      }
+    },
+    "bigquery-project-b": {
+      "command": "node", 
+      "args": ["/path/to/bigquery-mcp-server/dist/index.js"],
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "/path/to/project-b-service-account.json",
+        "BQ_LOCATION": "EU"
+      }
+    }
+  }
+}
 ```
-~/clients/
-├── client-a/
-│   ├── bigquery-service-account.json
-│   └── notes.md
-├── client-b/
-│   ├── bigquery-key.json
-│   └── project-info.md
-└── client-c/
-    ├── gcp-service-account.json
-    └── config.yaml
-```
 
-Then use:
+## 🧪 **Testing the Server**
+
+### Test Server Configuration
 
 ```bash
-# Quick switching
-node dist/index.js ~/clients/client-a/bigquery-service-account.json
-node dist/index.js ~/clients/client-b/bigquery-key.json  
-node dist/index.js ~/clients/client-c/gcp-service-account.json
-```
-
-## 🧪 **Testing Different Setups**
-
-### Test Server Without Cursor
-
-```bash
-# Test with a service account file
-echo '{"jsonrpc": "2.0", "method": "tools/list", "id": 1}' | node dist/index.js /path/to/service-account.json
+# Test with environment variable
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
+echo '{"jsonrpc": "2.0", "method": "tools/list", "id": 1}' | npm start
 
 # Should return list of available tools
 ```
 
-### Test Configuration Priority
-
-The server checks for configuration in this order:
-
-1. **Command line argument** (highest priority)
-2. **GOOGLE_APPLICATION_CREDENTIALS** environment variable
-3. **GOOGLE_CLOUD_PROJECT** or **BQ_PROJECT_ID** environment variables
-
-### Test Error Handling
+### Test Different Transport Modes
 
 ```bash
-# File doesn't exist
-node dist/index.js nonexistent.json
+# stdio (default)
+npm start
 
-# Invalid JSON file  
-echo "invalid json" > test.json
-node dist/index.js test.json
-rm test.json
-
-# No configuration at all
-node dist/index.js
+# HTTP mode
+npm run start:http
 ```
 
-## 🔄 **Quick Client Switching Examples**
+## 🔄 **Development Workflow**
 
-### Scenario 1: Working with Different Clients
+### Development Mode
 
 ```bash
-# Morning: Work on Client A analytics
-node dist/index.js ~/clients/acme-corp/bigquery-key.json
+# stdio development
+npm run dev
 
-# Afternoon: Switch to Client B reporting
-node dist/index.js ~/clients/beta-inc/service-account.json
-
-# Evening: Check Client C data
-node dist/index.js ~/clients/gamma-llc/gcp-credentials.json
+# HTTP development
+npm run dev:http
 ```
 
-### Scenario 2: Different Environments
+### Working with Different Environments
 
 ```bash
 # Development environment
-node dist/index.js ~/keys/dev-bigquery.json
+export GOOGLE_APPLICATION_CREDENTIALS="~/keys/dev-bigquery.json"
+npm start
 
-# Staging environment  
-node dist/index.js ~/keys/staging-bigquery.json
-
-# Production environment
-node dist/index.js ~/keys/prod-bigquery.json
+# Production environment  
+export GOOGLE_APPLICATION_CREDENTIALS="~/keys/prod-bigquery.json"
+npm start
 ```
 
 ## 💡 **Pro Tips**
 
 1. **Keep service accounts organized**: Use descriptive names and folder structure
-2. **Test before switching**: Always verify the service account file works
+2. **Test before deploying**: Always verify the service account file works
 3. **Use absolute paths**: Avoid relative paths in Cursor configuration
 4. **Set appropriate permissions**: Ensure your service accounts have minimal required BigQuery permissions
-5. **Multiple servers**: You can run multiple BigQuery MCP servers for different clients simultaneously by using different names in Cursor config
+5. **Multiple servers**: You can run multiple BigQuery MCP servers for different projects simultaneously
 
 ## 🔒 **Security Best Practices**
 
 1. **Never commit service account files** to version control
-2. **Use separate service accounts** for each client
+2. **Use separate service accounts** for each project/environment
 3. **Rotate keys regularly** as per your security policy
 4. **Monitor access logs** in Google Cloud Console
-5. **Use least privilege principle** - only grant necessary BigQuery permissions 
+5. **Use least privilege principle** - only grant necessary BigQuery permissions
+
+## 📋 **Available Tools**
+
+- `list_datasets` - List all datasets in your BigQuery project
+- `list_tables` - List all tables in a specific dataset  
+- `get_table_schema` - Get detailed schema information for a table
+- `execute_query` - Execute SQL queries with optional dry-run validation
+- `get_query_results` - Retrieve results from previously executed query jobs 
