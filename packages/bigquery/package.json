@@ -1,0 +1,36 @@
+{
+    "name": "@mcp-servers/bigquery",
+    "version": "1.0.0",
+    "description": "MCP server for BigQuery schema inspection and query execution",
+    "main": "dist/index.js",
+    "type": "module",
+    "scripts": {
+        "build": "tsc",
+        "start": "node dist/index.js",
+        "start:stdio": "node dist/index.js --transport=stdio",
+        "start:http": "node dist/index.js --transport=http",
+        "dev": "tsx src/index.ts",
+        "dev:http": "tsx src/index.ts --transport=http"
+    },
+    "keywords": [
+        "mcp",
+        "bigquery",
+        "google-cloud",
+        "sql",
+        "model-context-protocol"
+    ],
+    "dependencies": {
+        "@google-cloud/bigquery": "^7.3.0",
+        "@mcp-servers/shared": "file:../shared",
+        "@modelcontextprotocol/sdk": "^1.12.1",
+        "cors": "^2.8.5",
+        "express": "^5.1.0"
+    },
+    "devDependencies": {
+        "@types/cors": "^2.8.19",
+        "@types/express": "^5.0.3",
+        "@types/node": "^20.10.0",
+        "tsx": "^4.6.0",
+        "typescript": "^5.3.0"
+    }
+}

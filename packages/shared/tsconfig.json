@@ -10,13 +10,10 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
-    "composite": true,
-    "types": []
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true
   },
-  "references": [
-    { "path": "./packages/shared" },
-    { "path": "./packages/bigquery" },
-    { "path": "./packages/google-ads" }
-  ],
-  "files": []
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
